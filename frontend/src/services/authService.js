@@ -20,6 +20,11 @@ export const authService = {
     localStorage.removeItem('canteen_user');
   },
 
+  changePassword: async (passwords) => {
+    const response = await api.put('/auth/change-password', passwords);
+    return response.data;
+  },
+
   getStoredUser: () => {
     try {
       const user = localStorage.getItem('canteen_user');

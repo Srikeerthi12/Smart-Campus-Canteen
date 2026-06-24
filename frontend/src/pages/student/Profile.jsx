@@ -1,18 +1,47 @@
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
 import { formatDate, formatCurrency } from '../../utils/formatters';
-import { FiUser, FiMail, FiShield, FiCalendar, FiPackage, FiDollarSign } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiCalendar, FiPackage, FiDollarSign, FiLock } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
   const { user, logout } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     orderService.getMyOrders().then(setOrders).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwords.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword({
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+      });
+      toast.success('Password updated successfully!');
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const totalSpent = orders.reduce((sum, o) => o.status !== 'cancelled' ? sum + o.total : sum, 0);
   const completedOrders = orders.filter(o => o.status === 'delivered').length;
@@ -93,6 +122,60 @@ const Profile = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Change Password Card */}
+        <div className="clay-card" style={{ padding: '28px', marginBottom: '24px' }}>
+          <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#2D3436', marginBottom: '20px' }}>
+            🔒 Change Password
+          </h3>
+          <form onSubmit={handlePasswordChange}>
+            <div className="form-group">
+              <label className="form-label">Current Password</label>
+              <input
+                id="current-password"
+                type="password"
+                className="input-field"
+                placeholder="Enter current password"
+                value={passwords.currentPassword}
+                onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input
+                id="new-password"
+                type="password"
+                className="input-field"
+                placeholder="Enter new password (min. 6 chars)"
+                value={passwords.newPassword}
+                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirm New Password</label>
+              <input
+                id="confirm-password"
+                type="password"
+                className="input-field"
+                placeholder="Confirm new password"
+                value={passwords.confirmPassword}
+                onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+            <button
+              id="change-password-submit"
+              type="submit"
+              className="btn-primary"
+              disabled={changingPassword}
+              style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+            >
+              {changingPassword ? 'Updating Password...' : 'Update Password'}
+            </button>
+          </form>
         </div>
 
         {/* Actions */}
