@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Canteen = require('../models/Canteen');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const createCanteenOwner = async (req, res) => {
     try {

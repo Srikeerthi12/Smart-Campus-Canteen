@@ -2,7 +2,7 @@ const Canteen = require('../models/Canteen');
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // get all canteens
 const getAllCanteens = async (req, res) => {
