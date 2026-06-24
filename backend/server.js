@@ -13,7 +13,13 @@ const adminRoutes = require('./routes/admin');
 const connectDB = require('./config/database');
 const app = express()
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        "https://your-vercel-app.vercel.app"
+    ],
+    credentials: true
+}));
 app.use(express.json())
 
 // Serve static uploads
