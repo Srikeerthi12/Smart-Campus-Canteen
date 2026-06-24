@@ -71,6 +71,10 @@ const CanteenDetail = () => {
               <img
                 src={canteen.imageUrl}
                 alt={canteen.name}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&auto=format&fit=crop&q=80';
+                }}
                 style={{
                   width: '80px', height: '80px', flexShrink: 0,
                   objectFit: 'cover',
