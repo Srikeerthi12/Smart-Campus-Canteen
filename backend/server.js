@@ -12,6 +12,7 @@ const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
 const connectDB = require('./config/database');
 const app = express()
+app.enable('trust proxy');
 
 const allowedOrigins = [
     "http://localhost:3000",

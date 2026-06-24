@@ -48,8 +48,9 @@ router.post('/', authMiddleware, upload.single('image'), (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Generate dynamic full URL
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // Generate dynamic full URL (supporting reverse proxy protocol)
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const fileUrl = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`;
 
     res.status(200).json({
       message: 'File uploaded successfully',
