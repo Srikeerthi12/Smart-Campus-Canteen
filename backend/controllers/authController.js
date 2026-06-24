@@ -54,8 +54,8 @@ try {
 
     const token = jwt.sign(
         { userId: user._id, role: user.role, canteenId: user.canteenId },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE }
+        process.env.JWT_SECRET || 'campuseats_fallback_secret_key_2026_safe',
+        { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
     res.status(200).json({
