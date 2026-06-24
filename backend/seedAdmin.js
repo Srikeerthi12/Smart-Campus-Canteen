@@ -11,13 +11,18 @@ const seedSuperAdmin = async () => {
         });
         console.log('MongoDB connected successfully');
 
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+
         const existingAdmin = await User.findOne({ email: 'superadmin@campuseats.com' });
         if (existingAdmin) {
-            console.log('Super Admin already exists.');
+            existingAdmin.password = hashedPassword;
+            existingAdmin.role = 'superAdmin';
+            await existingAdmin.save();
+            console.log('✅ Super Admin password reset successfully!');
+            console.log('Email: superadmin@campuseats.com');
+            console.log('Password: admin123');
             process.exit(0);
         }
-
-        const hashedPassword = await bcrypt.hash('admin123', 10);
 
         const superAdmin = new User({
             name: 'Super Administrator',
