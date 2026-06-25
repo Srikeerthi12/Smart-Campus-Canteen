@@ -20,9 +20,26 @@ const saveCart = (items) => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(loadCart);
 
+  // Persist cart to localStorage whenever it changes
   useEffect(() => {
     saveCart(cartItems);
   }, [cartItems]);
+
+  // Auto-clear stale cart items left over from before a database reseed.
+  // After the menu API fix, item.canteen is always a populated object {_id, name, ...}.
+  // Old items stored in localStorage have item.canteen as a plain string (raw ObjectId).
+  // Placing orders with those stale IDs would silently break canteen info display.
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      const hasStaleItems = cartItems.some(
+        (item) => !item.canteen || typeof item.canteen === 'string'
+      );
+      if (hasStaleItems) {
+        console.warn('[Cart] Stale cart items detected — clearing cart to prevent broken orders.');
+        setCartItems([]);
+      }
+    }
+  }, []); // run once on mount
 
   const addItem = (item) => {
     setCartItems((prev) => {

@@ -38,9 +38,16 @@ const AdminDashboard = () => {
 
   const pending = orders.filter(o => o.status === 'pending').length;
   const preparing = orders.filter(o => o.status === 'preparing').length;
+  
+  // Realized revenue = completed (delivered) orders only
   const totalRevenue = orders
-    .filter(o => o.status !== 'cancelled')
+    .filter(o => o.status === 'delivered')
     .reduce((sum, o) => sum + o.total, 0);
+
+  // Filter menu items to only show the owner's canteen items if logged in as an owner
+  const ownerMenuItems = isOwner && user?.canteenId
+    ? menuItems.filter(i => (i.canteen?._id || i.canteen)?.toString() === user.canteenId.toString())
+    : menuItems;
 
   return (
     <div>
@@ -56,9 +63,9 @@ const AdminDashboard = () => {
         <AdminStatCard icon="📋" title="Total Orders" value={orders.length} color="#FF7A00" subtitle="All time" />
         <AdminStatCard icon="⏳" title="Pending Orders" value={pending} color="#F59E0B" subtitle="Need attention" />
         <AdminStatCard icon="👨‍🍳" title="Preparing" value={preparing} color="#3B82F6" subtitle="In kitchen" />
-        <AdminStatCard icon="🍽️" title="Menu Items" value={menuItems.length} color="#22C55E" subtitle={`${menuItems.filter(i => i.isAvailable).length} available`} />
+        <AdminStatCard icon="🍽️" title="Menu Items" value={ownerMenuItems.length} color="#22C55E" subtitle={`${ownerMenuItems.filter(i => i.isAvailable).length} available`} />
         <AdminStatCard icon="🏪" title="Canteens" value={canteens.length} color="#9C27B0" subtitle="On campus" />
-        <AdminStatCard icon="💰" title="Total Revenue" value={formatCurrency(totalRevenue)} color="#EF4444" subtitle="Excl. cancelled" />
+        <AdminStatCard icon="💰" title="Total Revenue" value={formatCurrency(totalRevenue)} color="#EF4444" subtitle="Delivered only" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
@@ -76,6 +83,8 @@ const AdminDashboard = () => {
                 <thead>
                   <tr>
                     <th>Order ID</th>
+                    <th>Customer</th>
+                    {!isOwner && <th>Canteen</th>}
                     <th>Items</th>
                     <th>Total</th>
                     <th>Time</th>
@@ -83,17 +92,30 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.slice(0, 8).map(order => (
-                    <tr key={order._id}>
-                      <td style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.82rem' }}>
-                        #{order._id?.slice(-8).toUpperCase()}
-                      </td>
-                      <td style={{ color: '#636e72' }}>{order.items?.length || 0} item(s)</td>
-                      <td style={{ fontWeight: 600, color: '#FF7A00' }}>{formatCurrency(order.total)}</td>
-                      <td style={{ color: '#636e72', fontSize: '0.82rem' }}>{formatRelativeTime(order.createdAt)}</td>
-                      <td><OrderStatusBadge status={order.status} /></td>
-                    </tr>
-                  ))}
+                  {orders.slice(0, 8).map(order => {
+                    const student = (typeof order.user === 'object' && order.user !== null) ? order.user : (order.userSnapshot?.name ? order.userSnapshot : null);
+                    const canteen = (typeof order.canteenId === 'object' && order.canteenId !== null) ? order.canteenId : (order.canteenSnapshot?.name ? order.canteenSnapshot : null);
+
+                    return (
+                      <tr key={order._id}>
+                        <td style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                          #{order._id?.slice(-8).toUpperCase()}
+                        </td>
+                        <td style={{ fontWeight: 600, fontSize: '0.85rem', color: '#2D3436' }}>
+                          {student?.name || '—'}
+                        </td>
+                        {!isOwner && (
+                          <td style={{ fontSize: '0.85rem', color: '#636e72', fontWeight: 500 }}>
+                            {canteen?.name || '—'}
+                          </td>
+                        )}
+                        <td style={{ color: '#636e72' }}>{order.items?.length || 0} item(s)</td>
+                        <td style={{ fontWeight: 600, color: '#FF7A00' }}>{formatCurrency(order.total)}</td>
+                        <td style={{ color: '#636e72', fontSize: '0.82rem' }}>{formatRelativeTime(order.createdAt)}</td>
+                        <td><OrderStatusBadge status={order.status} /></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {orders.length === 0 && (

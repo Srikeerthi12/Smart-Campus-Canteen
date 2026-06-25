@@ -34,21 +34,27 @@ const AnalyticsDashboard = () => {
   }, []);
 
   // Computed stats
-  const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0);
+  const totalRevenue = orders.filter(o => o.status === 'delivered').reduce((s, o) => s + o.total, 0);
   const statusCounts = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'].reduce((acc, s) => {
     acc[s] = orders.filter(o => o.status === s).length;
     return acc;
   }, {});
-  const avgOrderValue = orders.length > 0 ? totalRevenue / orders.filter(o => o.status !== 'cancelled').length : 0;
+  const deliveredOrdersCount = orders.filter(o => o.status === 'delivered').length;
+  const avgOrderValue = deliveredOrdersCount > 0 ? totalRevenue / deliveredOrdersCount : 0;
 
   // Orders per canteen
-  const ordersPerCanteen = canteens.map(c => ({
-    name: c.name,
-    count: orders.filter(o => o.canteenId === c._id || o.canteenId?.toString() === c._id?.toString()).length,
-    revenue: orders
-      .filter(o => (o.canteenId === c._id || o.canteenId?.toString() === c._id?.toString()) && o.status !== 'cancelled')
-      .reduce((s, o) => s + o.total, 0),
-  })).sort((a, b) => b.count - a.count);
+  const ordersPerCanteen = canteens.map(c => {
+    const getCidStr = (cId) => (cId && typeof cId === 'object' ? cId._id?.toString() : cId?.toString()) || '';
+    const targetCid = c._id?.toString();
+
+    return {
+      name: c.name,
+      count: orders.filter(o => getCidStr(o.canteenId) === targetCid).length,
+      revenue: orders
+        .filter(o => getCidStr(o.canteenId) === targetCid && o.status === 'delivered')
+        .reduce((s, o) => s + o.total, 0),
+    };
+  }).sort((a, b) => b.count - a.count);
 
   const STATUS_COLORS = {
     pending: '#F59E0B',

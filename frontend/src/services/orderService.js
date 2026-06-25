@@ -16,8 +16,19 @@ export const orderService = {
     return response.data.order;
   },
 
-  getAllOrders: async () => {
-    const response = await api.get('/orders');
+  /**
+   * Get all orders (admin / owner).
+   * Admins can optionally pass filters: { canteenId, studentId, dateFrom, dateTo }
+   */
+  getAllOrders: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.canteenId) params.append('canteenId', filters.canteenId);
+    if (filters.studentId) params.append('studentId', filters.studentId);
+    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.append('dateTo', filters.dateTo);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const response = await api.get(`/orders${query}`);
     return response.data.orders || [];
   },
 

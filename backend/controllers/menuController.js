@@ -17,7 +17,8 @@ const getAllMenuItems = async (req, res) => {
 const getMenuItemsByCanteen = async (req, res) => {
   try {
     const { canteenId } = req.params;
-    const menuItems = await MenuItem.find({ canteen: canteenId });
+    const menuItems = await MenuItem.find({ canteen: canteenId })
+      .populate('canteen', 'name location contactPhone');
     if (menuItems.length === 0) {
       return res.status(404).json({ message: 'No items found for this canteen' });
     }

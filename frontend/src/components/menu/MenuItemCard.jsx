@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency, truncate } from '../../utils/formatters';
 import { FiPlus, FiMinus, FiShoppingCart } from 'react-icons/fi';
+import { isCanteenOpen } from '../../utils/canteenUtils';
 
 const FOOD_PLACEHOLDER = (name) => {
   const colors = ['#FF7A00','#FFB703','#4CAF50','#2196F3','#9C27B0'];
@@ -25,12 +26,15 @@ const MenuItemCard = ({ item }) => {
     setTimeout(() => setAdding(false), 600);
   };
 
+  const canteen = typeof item.canteen === 'object' ? item.canteen : null;
+  const isClosed = canteen ? !isCanteenOpen(canteen.openTime, canteen.closeTime) : false;
+
   return (
     <div
       className="clay-card-sm"
       style={{
         overflow: 'hidden',
-        opacity: item.isAvailable ? 1 : 0.65,
+        opacity: item.isAvailable && !isClosed ? 1 : 0.65,
         transition: 'all 0.3s',
       }}
     >
@@ -84,13 +88,24 @@ const MenuItemCard = ({ item }) => {
           {truncate(item.description, 60)}
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', justifyContent: 'space-between' }}>
           <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#FF7A00' }}>
             {formatCurrency(item.price)}
           </span>
 
           {/* Cart controls */}
-          {item.isAvailable && (
+          {isClosed ? (
+            <span style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              color: '#EF4444',
+              padding: '6px 12px',
+              borderRadius: '10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+            }}>
+              🏪 Closed
+            </span>
+          ) : item.isAvailable ? (
             !inCart ? (
               <button
                 id={`add-to-cart-${item._id}`}
@@ -131,7 +146,7 @@ const MenuItemCard = ({ item }) => {
                 </button>
               </div>
             )
-          )}
+          ) : null}
         </div>
       </div>
     </div>

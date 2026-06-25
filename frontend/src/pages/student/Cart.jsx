@@ -8,6 +8,7 @@ import { formatCurrency } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { FiArrowLeft, FiShoppingBag, FiFileText } from 'react-icons/fi';
 import { MdRestaurant } from 'react-icons/md';
+import { isCanteenOpen } from '../../utils/canteenUtils';
 
 const Cart = () => {
   const { cartItems, clearCart, getTotalItems, getTotalPrice } = useCart();
@@ -17,19 +18,58 @@ const Cart = () => {
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
+
+    // 1. Check if any canteen is closed
+    const closedCanteens = new Set();
+    cartItems.forEach(item => {
+      const canteen = typeof item.canteen === 'object' ? item.canteen : null;
+      if (canteen && !isCanteenOpen(canteen.openTime, canteen.closeTime)) {
+        closedCanteens.add(canteen.name || 'Canteen');
+      }
+    });
+
+    if (closedCanteens.size > 0) {
+      const names = Array.from(closedCanteens).join(', ');
+      toast.error(`🏪 Canteen "${names}" is closed. Please remove its items to place order.`);
+      return;
+    }
+
     setPlacing(true);
     try {
-      const canteenId = cartItems[0].canteen?._id || cartItems[0].canteen;
-      const orderData = {
-        items: cartItems.map(i => i._id),
-        quantities: cartItems.map(i => i.quantity),
-        total: getTotalPrice(),
-        canteenId: canteenId,
-        specialInstructions: instructions,
-      };
-      await orderService.create(orderData);
+      // 2. Group items by canteen ID
+      const itemsByCanteen = {};
+      cartItems.forEach(item => {
+        const cId = item.canteen?._id || item.canteen;
+        if (!cId) return;
+        if (!itemsByCanteen[cId]) {
+          itemsByCanteen[cId] = [];
+        }
+        itemsByCanteen[cId].push(item);
+      });
+
+      const canteenIds = Object.keys(itemsByCanteen);
+
+      // 3. Place separate orders per canteen
+      for (const cId of canteenIds) {
+        const itemsForCanteen = itemsByCanteen[cId];
+        const canteenTotal = itemsForCanteen.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+        const orderData = {
+          items: itemsForCanteen.map(i => i._id),
+          quantities: itemsForCanteen.map(i => i.quantity),
+          total: canteenTotal,
+          canteenId: cId,
+          specialInstructions: instructions,
+        };
+        await orderService.create(orderData);
+      }
+
       clearCart();
-      toast.success('🎉 Order placed successfully!');
+      const orderCount = canteenIds.length;
+      toast.success(orderCount > 1
+        ? `🎉 Placed ${orderCount} orders successfully (split by canteen)!`
+        : '🎉 Order placed successfully!'
+      );
       navigate('/orders');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to place order. Please try again.');

@@ -59,6 +59,7 @@ const AppRoutes = () => {
         <Route path="/superadmin/canteens" element={<CanteenSettings />} />
         <Route path="/superadmin/owners" element={<OwnerManagement />} />
         <Route path="/superadmin/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/superadmin/orders" element={<OrderManagement />} />
       </Route>
 
       {/* Catch-all — redirect to home */}

@@ -161,7 +161,7 @@ const CanteenDetail = () => {
           <div className="stagger-children" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
             {filtered.map((item, i) => (
               <div key={item._id} className="animate-fade-in-up" style={{ opacity: 0, animationFillMode: 'forwards' }}>
-                <MenuItemCard item={item} />
+                <MenuItemCard item={{ ...item, canteen }} />
               </div>
             ))}
           </div>
